@@ -1,13 +1,11 @@
-import { put } from '@vercel/blob'
 import { type NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    
+
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -19,26 +17,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       return NextResponse.json({ error: 'Only images are allowed' }, { status: 400 })
     }
 
-    // Validate file size (max 10MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: 'File too large. Max 10MB allowed' }, { status: 400 })
     }
 
-    // Generate unique filename
     const timestamp = Date.now()
-    const filename = `portfolio/${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+    const filename = `images/${timestamp}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
 
-    // Upload to Vercel Blob (private)
-    const blob = await put(filename, file, {
-      access: 'private',
-    })
+    const { data, error } = await supabase.storage
+      .from('portfolio')
+      .upload(filename, file, {
+        cacheControl: '3600',
+        contentType: file.type,
+        upsert: false,
+      })
 
-    return NextResponse.json({ pathname: blob.pathname })
+    if (error || !data) {
+      console.error('Storage upload error:', error)
+      return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    }
+
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from('portfolio')
+      .createSignedUrl(filename, 60 * 60)
+
+    if (signedError || !signedData) {
+      console.error('Signed URL error:', signedError)
+      return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+    }
+
+    return NextResponse.json({ pathname: filename, previewUrl: signedData.signedUrl })
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })

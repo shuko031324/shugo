@@ -17,6 +17,9 @@ export async function POST(request: NextRequest) {
       custom_request,
       project_details,
       budget_range,
+      referral_source,
+      commissioned_by,
+      consent_given,
     } = body
 
     // Validation
@@ -30,6 +33,20 @@ export async function POST(request: NextRequest) {
     if (!email && !facebook_name && !mobile_number) {
       return NextResponse.json(
         { error: 'At least one contact method is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!referral_source) {
+      return NextResponse.json(
+        { error: 'Referral source is required' },
+        { status: 400 }
+      )
+    }
+
+    if (referral_source === 'from-someone' && !commissioned_by?.trim()) {
+      return NextResponse.json(
+        { error: 'Commissioned by is required when referred by someone' },
         { status: 400 }
       )
     }
@@ -59,6 +76,9 @@ export async function POST(request: NextRequest) {
         custom_request: custom_request || null,
         project_details: project_details || null,
         budget_range: budget_range || null,
+        referral_source: referral_source || null,
+        commissioned_by: referral_source === 'from-someone' ? commissioned_by || null : null,
+        consent_given: !!consent_given,
         status: 'pending',
       })
       .select()
@@ -72,8 +92,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Send email notification
-    if (resend && process.env.ADMIN_EMAIL) {
+    // Send email notification to the admin Gmail address
+    const adminEmail = process.env.ADMIN_EMAIL || 'shuko031324@gmail.com'
+
+    if (resend) {
       try {
         const contactInfo = [
           email && `Email: ${email}`,
@@ -83,7 +105,7 @@ export async function POST(request: NextRequest) {
 
         await resend.emails.send({
           from: 'SHUGO <onboarding@resend.dev>',
-          to: process.env.ADMIN_EMAIL,
+          to: adminEmail,
           subject: `New Project Request from ${client_name}`,
           html: `
             <div style="font-family: monospace; padding: 20px; background: #1a1625; color: #e0e0ff;">
@@ -103,8 +125,16 @@ export async function POST(request: NextRequest) {
                 <p><strong>Service:</strong> ${serviceName || 'Not specified'}</p>
                 <p><strong>Custom Request:</strong> ${custom_request || 'None'}</p>
                 <p><strong>Budget Range:</strong> ${budget_range || 'Not specified'}</p>
+                <p><strong>How they heard about me:</strong> ${referral_source === 'from-someone' ? 'From Someone' : 'Just found out myself'}</p>
+                ${referral_source === 'from-someone' ? `<p><strong>Commissioned by:</strong> ${commissioned_by}</p>` : ''}
                 <p><strong>Details:</strong></p>
                 <pre style="color: #a0a0ff; white-space: pre-wrap;">${project_details || 'No additional details provided'}</pre>
+              </div>
+
+              <div style="margin: 20px 0; padding: 15px; background: #252035; border: 2px solid #3d3555;">
+                <h2 style="color: #00d4ff; margin-bottom: 10px;">Consent & Permissions</h2>
+                <p><strong>Client Consent Given:</strong> ${consent_given ? 'YES ✓' : 'NO ✗'}</p>
+                <p style="color: #a0a0ff; font-size: 12px;">Client has consented to use of GitHub account and Gmail credentials for Vercel deployment and Supabase integration.</p>
               </div>
               
               <p style="color: #888; font-size: 12px; margin-top: 30px;">

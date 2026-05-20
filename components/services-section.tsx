@@ -72,7 +72,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
                   <div className="flex items-baseline gap-1">
                     <span className="text-xs text-muted-foreground">Starting at</span>
                     <span className="font-[var(--font-pixel)] text-lg text-primary">
-                      ${service.starting_price.toLocaleString()}
+                      ₱{service.starting_price.toLocaleString()}
                     </span>
                   </div>
                 </CardContent>

@@ -34,7 +34,10 @@ export interface ProjectRequest {
   custom_request: string | null
   project_details: string | null
   budget_range: string | null
-  status: 'pending' | 'accepted' | 'rejected'
+  referral_source?: string | null
+  commissioned_by?: string | null
+  consent_given: boolean
+  status: 'pending' | 'accepted' | 'rejected' | 'completed'
   admin_comment: string | null
   created_at: string
   updated_at: string

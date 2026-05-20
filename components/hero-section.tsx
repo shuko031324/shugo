@@ -28,13 +28,13 @@ export function HeroSection() {
           <h1 className="font-[var(--font-pixel)] text-2xl md:text-4xl text-foreground mb-6 leading-relaxed pixel-text-shadow">
             <span className="text-primary">SHUGO</span>
             <br />
-            <span className="text-accent">CREATIVE STUDIO</span>
+            <span className="text-accent">AI Augmented Developer</span>
           </h1>
           
           <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
-            Crafting digital experiences with retro pixel art innovation. 
-            From websites to applications, we bring your ideas to life 
-            with creative pixel precision.
+            Shugo me your project ideas, and I'll bring them to life with pixel-perfect precision and AI-powered creativity. 
+            On time, Perfect Service, shugo now.
+
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">

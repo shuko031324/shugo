@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { PortfolioProject } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ import { Plus, Pencil, Trash2, Loader2, Upload, Star, Eye, EyeOff, ExternalLink 
 import Image from 'next/image'
 
 interface PortfolioClientProps {
-  initialProjects: PortfolioProject[]
+  initialProjects?: PortfolioProject[]
 }
 
 const emptyProject = {
@@ -29,14 +29,16 @@ const emptyProject = {
   description: '',
   client_name: '',
   image_pathname: '',
+  image_preview_url: '',
   project_url: '',
   is_featured: false,
   is_visible: true,
   sort_order: 0,
 }
 
-export function PortfolioClient({ initialProjects }: PortfolioClientProps) {
+export function PortfolioClient({ initialProjects = [] }: PortfolioClientProps) {
   const [projects, setProjects] = useState<PortfolioProject[]>(initialProjects)
+  const [isFetching, setIsFetching] = useState(initialProjects.length === 0)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingProject, setEditingProject] = useState<PortfolioProject | null>(null)
   const [formData, setFormData] = useState(emptyProject)
@@ -44,6 +46,25 @@ export function PortfolioClient({ initialProjects }: PortfolioClientProps) {
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setIsFetching(true)
+      const { data, error } = await supabase
+        .from('portfolio_projects')
+        .select('*')
+        .order('sort_order', { ascending: true })
+
+      if (!error) {
+        setProjects(data || [])
+      } else {
+        console.error('Error loading portfolio projects:', error)
+      }
+      setIsFetching(false)
+    }
+
+    fetchProjects()
+  }, [])
 
   const handleOpenDialog = (project?: PortfolioProject) => {
     if (project) {
@@ -53,6 +74,7 @@ export function PortfolioClient({ initialProjects }: PortfolioClientProps) {
         description: project.description || '',
         client_name: project.client_name || '',
         image_pathname: project.image_pathname || '',
+        image_preview_url: '',
         project_url: project.project_url || '',
         is_featured: project.is_featured,
         is_visible: project.is_visible,
@@ -87,8 +109,12 @@ export function PortfolioClient({ initialProjects }: PortfolioClientProps) {
 
       if (!response.ok) throw new Error('Upload failed')
 
-      const { pathname } = await response.json()
-      setFormData({ ...formData, image_pathname: pathname })
+      const { pathname, previewUrl } = await response.json()
+      setFormData({
+        ...formData,
+        image_pathname: pathname,
+        image_preview_url: previewUrl || '',
+      })
       toast.success('Image uploaded!')
     } catch (error) {
       console.error('Error uploading image:', error)
@@ -262,12 +288,20 @@ export function PortfolioClient({ initialProjects }: PortfolioClientProps) {
                 >
                   {formData.image_pathname ? (
                     <div className="relative aspect-video">
-                      <Image
-                        src={`/api/files?pathname=${encodeURIComponent(formData.image_pathname)}`}
-                        alt="Project preview"
-                        fill
-                        className="object-cover"
-                      />
+                      {formData.image_preview_url ? (
+                        <img
+                          src={formData.image_preview_url}
+                          alt="Project preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Image
+                          src={`/api/files?pathname=${encodeURIComponent(formData.image_pathname)}`}
+                          alt="Project preview"
+                          fill
+                          className="object-cover"
+                        />
+                      )}
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                         <p className="text-white text-sm">Click to change</p>
                       </div>
@@ -376,17 +410,22 @@ export function PortfolioClient({ initialProjects }: PortfolioClientProps) {
       </div>
 
       {/* Projects Grid */}
-      {projects.length > 0 ? (
+      {isFetching ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4].map((item) => (
+            <Card key={item} className="bg-card border-4 border-border animate-pulse h-72" />
+          ))}
+        </div>
+      ) : projects.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {projects.map((project) => (
             <Card key={project.id} className={`bg-card border-4 ${project.is_visible ? 'border-border' : 'border-border/50 opacity-60'} overflow-hidden`}>
               <div className="relative aspect-video bg-muted">
                 {project.image_pathname ? (
-                  <Image
+                  <img
                     src={`/api/files?pathname=${encodeURIComponent(project.image_pathname)}`}
                     alt={project.title}
-                    fill
-                    className="object-cover"
+                    className="absolute inset-0 h-full w-full object-cover"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">

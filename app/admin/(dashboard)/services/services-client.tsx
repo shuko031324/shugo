@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { Service } from '@/lib/types'
 import { Button } from '@/components/ui/button'
@@ -17,10 +17,10 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Loader2, DollarSign } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, PhilippinePeso } from 'lucide-react'
 
 interface ServicesClientProps {
-  initialServices: Service[]
+  initialServices?: Service[]
 }
 
 const emptyService = {
@@ -31,13 +31,33 @@ const emptyService = {
   sort_order: 0,
 }
 
-export function ServicesClient({ initialServices }: ServicesClientProps) {
+export function ServicesClient({ initialServices = [] }: ServicesClientProps) {
   const [services, setServices] = useState<Service[]>(initialServices)
+  const [isFetching, setIsFetching] = useState(initialServices.length === 0)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [formData, setFormData] = useState(emptyService)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    const fetchServices = async () => {
+      setIsFetching(true)
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .order('sort_order', { ascending: true })
+
+      if (!error) {
+        setServices(data || [])
+      } else {
+        console.error('Error loading services:', error)
+      }
+      setIsFetching(false)
+    }
+
+    fetchServices()
+  }, [])
 
   const handleOpenDialog = (service?: Service) => {
     if (service) {
@@ -208,7 +228,7 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
                 />
               </div>
               <div>
-                <Label htmlFor="price">Starting Price ($)</Label>
+                <Label htmlFor="price">Starting Price (₱)</Label>
                 <Input
                   id="price"
                   type="number"
@@ -251,7 +271,13 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
       </div>
 
       {/* Services List */}
-      {services.length > 0 ? (
+      {isFetching ? (
+        <div className="space-y-4">
+          {[1, 2, 3].map((item) => (
+            <Card key={item} className="bg-card border-4 border-border animate-pulse h-28" />
+          ))}
+        </div>
+      ) : services.length > 0 ? (
         <div className="grid gap-4">
           {services.map((service) => (
             <Card key={service.id} className={`bg-card border-4 ${service.is_active ? 'border-border' : 'border-border/50 opacity-60'}`}>
@@ -297,7 +323,7 @@ export function ServicesClient({ initialServices }: ServicesClientProps) {
                   </p>
                 )}
                 <div className="flex items-center gap-1 text-primary">
-                  <DollarSign className="size-4" />
+                  <PhilippinePeso className="size-4" />
                   <span className="font-[var(--font-pixel)] text-sm">
                     {service.starting_price.toLocaleString()}
                   </span>

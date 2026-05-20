@@ -18,10 +18,24 @@ import {
   Check, 
   X, 
   Loader2,
-  DollarSign,
+  PhilippinePeso,
   MessageSquare
 } from 'lucide-react'
 import Link from 'next/link'
+
+const formatBudgetRange = (budgetRange?: string) => {
+  if (!budgetRange) return 'Not specified'
+  if (budgetRange.startsWith('under-')) return `Under ₱${budgetRange.split('-')[1]}`
+  if (budgetRange.startsWith('over-')) return `Over ₱${budgetRange.split('-')[1]}`
+
+  const [min, max] = budgetRange.split('-')
+  return `₱${min} - ₱${max}`
+}
+
+const formatReferralSource = (referralSource?: string | null) => {
+  if (!referralSource) return 'Not specified'
+  return referralSource === 'from-someone' ? 'From Someone' : 'Just found out myself'
+}
 
 interface RequestDetailClientProps {
   request: ProjectRequest & {
@@ -36,7 +50,7 @@ export function RequestDetailClient({ request: initialRequest }: RequestDetailCl
   const router = useRouter()
   const supabase = createClient()
 
-  const handleStatusUpdate = async (status: 'accepted' | 'rejected') => {
+  const handleStatusUpdate = async (status: 'accepted' | 'rejected' | 'completed') => {
     setIsUpdating(true)
     
     try {
@@ -191,28 +205,42 @@ export function RequestDetailClient({ request: initialRequest }: RequestDetailCl
                 <div className="p-3 bg-muted">
                   <p className="text-xs text-muted-foreground mb-1">Starting Price</p>
                   <p className="text-foreground flex items-center gap-1">
-                    <DollarSign className="size-4" />
+                    <PhilippinePeso className="size-4" />
                     {request.service?.starting_price?.toLocaleString() || 'N/A'}
                   </p>
                 </div>
               </div>
-              
+
               {request.custom_request && (
                 <div className="p-3 bg-muted">
                   <p className="text-xs text-muted-foreground mb-1">Custom Request</p>
                   <p className="text-foreground">{request.custom_request}</p>
                 </div>
               )}
-              
+
               {request.budget_range && (
                 <div className="p-3 bg-muted">
                   <p className="text-xs text-muted-foreground mb-1">Budget Range</p>
                   <p className="text-foreground">
-                    {request.budget_range.replace('-', ' - $').replace('under', 'Under $').replace('over', 'Over $')}
+                    {formatBudgetRange(request.budget_range)}
                   </p>
                 </div>
               )}
-              
+
+              <div className="p-3 bg-muted">
+                <p className="text-xs text-muted-foreground mb-1">How they heard about me</p>
+                <p className="text-foreground">
+                  {formatReferralSource(request.referral_source)}
+                </p>
+              </div>
+
+              {request.commissioned_by && (
+                <div className="p-3 bg-muted">
+                  <p className="text-xs text-muted-foreground mb-1">Commissioned by</p>
+                  <p className="text-foreground">{request.commissioned_by}</p>
+                </div>
+              )}
+
               {request.project_details && (
                 <div className="p-3 bg-muted">
                   <p className="text-xs text-muted-foreground mb-1">Project Description</p>
@@ -257,6 +285,38 @@ export function RequestDetailClient({ request: initialRequest }: RequestDetailCl
             </CardContent>
           </Card>
 
+          {/* Consent Status */}
+          <Card className={`bg-card border-4 ${request.consent_given ? 'border-green-500/50' : 'border-amber-500/50'}`}>
+            <CardHeader>
+              <CardTitle className="font-[var(--font-pixel)] text-sm flex items-center gap-2">
+                {request.consent_given ? (
+                  <>
+                    <Check className="size-4 text-green-500" />
+                    <span className="text-green-500">CONSENT GIVEN</span>
+                  </>
+                ) : (
+                  <>
+                    <X className="size-4 text-amber-500" />
+                    <span className="text-amber-500">NO CONSENT</span>
+                  </>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`p-3 rounded ${request.consent_given ? 'bg-green-500/10' : 'bg-amber-500/10'}`}>
+                <p className="text-xs leading-relaxed">
+                  <strong>GitHub & Gmail Access:</strong> Client has{' '}
+                  {request.consent_given ? (
+                    <span className="text-green-600">✓ consented</span>
+                  ) : (
+                    <span className="text-amber-600">✗ not consented</span>
+                  )}{' '}
+                  to the use of their GitHub account and Gmail credentials for Vercel deployment and Supabase integration.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Status Actions */}
           <Card className="bg-card border-4 border-border">
             <CardHeader>
@@ -267,7 +327,7 @@ export function RequestDetailClient({ request: initialRequest }: RequestDetailCl
             <CardContent className="space-y-3">
               <Button
                 onClick={() => handleStatusUpdate('accepted')}
-                disabled={isUpdating || request.status === 'accepted'}
+                disabled={isUpdating || request.status === 'accepted' || request.status === 'completed'}
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
                 {isUpdating ? <Loader2 className="size-4 animate-spin mr-2" /> : <Check className="size-4 mr-2" />}
@@ -275,12 +335,20 @@ export function RequestDetailClient({ request: initialRequest }: RequestDetailCl
               </Button>
               <Button
                 onClick={() => handleStatusUpdate('rejected')}
-                disabled={isUpdating || request.status === 'rejected'}
+                disabled={isUpdating || request.status === 'rejected' || request.status === 'completed'}
                 variant="destructive"
                 className="w-full"
               >
                 {isUpdating ? <Loader2 className="size-4 animate-spin mr-2" /> : <X className="size-4 mr-2" />}
                 Reject Request
+              </Button>
+              <Button
+                onClick={() => handleStatusUpdate('completed')}
+                disabled={isUpdating || request.status === 'completed'}
+                className="w-full bg-sky-600 hover:bg-sky-700 text-white"
+              >
+                {isUpdating ? <Loader2 className="size-4 animate-spin mr-2" /> : <Check className="size-4 mr-2" />}
+                Mark Completed
               </Button>
             </CardContent>
           </Card>

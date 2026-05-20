@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { 
   Select,
   SelectContent,
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { RequestConfirmationDialog } from './request-confirmation-dialog'
 import { toast } from 'sonner'
 import { Loader2, Send, CheckCircle } from 'lucide-react'
 
@@ -23,6 +25,7 @@ interface RequestFormProps {
 export function RequestForm({ services }: RequestFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
   const [formData, setFormData] = useState({
     client_name: '',
     email: '',
@@ -32,40 +35,67 @@ export function RequestForm({ services }: RequestFormProps) {
     custom_request: '',
     project_details: '',
     budget_range: '',
+    referral_source: '',
+    commissioned_by: '',
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    // Validation
+  const validateForm = () => {
     if (!formData.client_name.trim()) {
       toast.error('Please enter your name')
-      return
+      return false
     }
     
     if (!formData.email && !formData.facebook_name && !formData.mobile_number) {
       toast.error('Please provide at least one contact method (email, Facebook, or mobile)')
-      return
+      return false
     }
     
     if (!formData.service_id && !formData.custom_request.trim()) {
       toast.error('Please select a service or describe your custom request')
-      return
+      return false
     }
 
+    if (!formData.referral_source) {
+      toast.error('Please tell me how you heard about me')
+      return false
+    }
+
+    if (formData.referral_source === 'from-someone' && !formData.commissioned_by.trim()) {
+      toast.error('Please enter who commissioned you')
+      return false
+    }
+
+    return true
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (validateForm()) {
+      setShowConfirmation(true)
+    }
+  }
+
+  const handleConfirmedSubmit = async () => {
     setIsSubmitting(true)
     
     try {
       const response = await fetch('/api/requests', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          referral_source: formData.referral_source,
+          commissioned_by: formData.referral_source === 'from-someone' ? formData.commissioned_by : null,
+          consent_given: true,
+        }),
       })
       
       if (!response.ok) {
         throw new Error('Failed to submit request')
       }
       
+      setShowConfirmation(false)
       setIsSubmitted(true)
       toast.success('Request submitted successfully! I will get back to you soon.')
       
@@ -79,6 +109,8 @@ export function RequestForm({ services }: RequestFormProps) {
         custom_request: '',
         project_details: '',
         budget_range: '',
+        referral_source: '',
+        commissioned_by: '',
       })
     } catch (error) {
       console.error('Error submitting request:', error)
@@ -135,6 +167,13 @@ export function RequestForm({ services }: RequestFormProps) {
           </p>
         </div>
 
+        <RequestConfirmationDialog
+          open={showConfirmation}
+          onOpenChange={setShowConfirmation}
+          onConfirm={handleConfirmedSubmit}
+          isSubmitting={isSubmitting}
+        />
+
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
           {/* Contact Information */}
           <div className="bg-card border-4 border-border p-6">
@@ -190,6 +229,40 @@ export function RequestForm({ services }: RequestFormProps) {
               <p className="text-xs text-muted-foreground">
                 Provide at least one contact method so I can reach you.
               </p>
+
+              <div className="border-t border-border pt-5">
+                <Label className="text-sm mb-3 block">How did you hear from me?</Label>
+                <RadioGroup
+                  value={formData.referral_source}
+                  onValueChange={(value) => setFormData({ ...formData, referral_source: value })}
+                >
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-input p-4 text-sm transition hover:border-primary">
+                      <RadioGroupItem value="from-someone" />
+                      <span>From Someone</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border bg-input p-4 text-sm transition hover:border-primary">
+                      <RadioGroupItem value="found-myself" />
+                      <span>Just found out myself</span>
+                    </label>
+                  </div>
+                </RadioGroup>
+
+                {formData.referral_source === 'from-someone' && (
+                  <div className="mt-4">
+                    <Label htmlFor="commissioned_by" className="text-sm">
+                      Commissioned by <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="commissioned_by"
+                      value={formData.commissioned_by}
+                      onChange={(e) => setFormData({ ...formData, commissioned_by: e.target.value })}
+                      placeholder="Enter the name who referred you"
+                      className="bg-input border-2 border-border focus:border-primary"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -210,7 +283,7 @@ export function RequestForm({ services }: RequestFormProps) {
                   <SelectContent>
                     {services.map((service) => (
                       <SelectItem key={service.id} value={service.id}>
-                        {service.name} - Starting at ${service.starting_price.toLocaleString()}
+                        {service.name} - Starting at ₱{service.starting_price.toLocaleString()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -252,12 +325,12 @@ export function RequestForm({ services }: RequestFormProps) {
                     <SelectValue placeholder="Select your budget range..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="under-500">Under $500</SelectItem>
-                    <SelectItem value="500-1000">$500 - $1,000</SelectItem>
-                    <SelectItem value="1000-2500">$1,000 - $2,500</SelectItem>
-                    <SelectItem value="2500-5000">$2,500 - $5,000</SelectItem>
-                    <SelectItem value="5000-10000">$5,000 - $10,000</SelectItem>
-                    <SelectItem value="over-10000">Over $10,000</SelectItem>
+                    <SelectItem value="under-500">Under ₱500</SelectItem>
+                    <SelectItem value="500-1000">₱500 - ₱1,000</SelectItem>
+                    <SelectItem value="1000-2500">₱1,000 - ₱2,500</SelectItem>
+                    <SelectItem value="2500-5000">₱2,500 - ₱5,000</SelectItem>
+                    <SelectItem value="5000-10000">₱5,000 - ₱10,000</SelectItem>
+                    <SelectItem value="over-10000">Over ₱10,000</SelectItem>
                     <SelectItem value="discuss">Let&apos;s Discuss</SelectItem>
                   </SelectContent>
                 </Select>

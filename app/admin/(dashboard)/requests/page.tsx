@@ -1,22 +1,76 @@
-import { createClient } from '@/lib/supabase/server'
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import type { ProjectRequest } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Mail, Facebook, Phone, Calendar, ArrowRight } from 'lucide-react'
+import { RequestStatusFilters } from '@/components/admin/request-status-filters'
 
-export const dynamic = 'force-dynamic'
+const formatBudgetRange = (budgetRange?: string) => {
+  if (!budgetRange) return 'Not specified'
+  if (budgetRange.startsWith('under-')) return `Under ₱${budgetRange.split('-')[1]}`
+  if (budgetRange.startsWith('over-')) return `Over ₱${budgetRange.split('-')[1]}`
 
-export default async function AdminRequestsPage() {
-  const supabase = await createClient()
-  
-  const { data: requests } = await supabase
-    .from('project_requests')
-    .select('*, service:services(name)')
-    .order('created_at', { ascending: false })
+  const [min, max] = budgetRange.split('-')
+  return `₱${min} - ₱${max}`
+}
 
-  const pendingCount = requests?.filter(r => r.status === 'pending').length || 0
-  const acceptedCount = requests?.filter(r => r.status === 'accepted').length || 0
-  const rejectedCount = requests?.filter(r => r.status === 'rejected').length || 0
+const statusBadgeClass = (status?: string) => {
+  if (status === 'pending') return 'bg-yellow-500/20 text-yellow-500'
+  if (status === 'accepted') return 'bg-green-500/20 text-green-500'
+  if (status === 'rejected') return 'bg-red-500/20 text-red-500'
+  return 'bg-sky-500/20 text-sky-500'
+}
+
+interface RequestWithService extends ProjectRequest {
+  service?: { name: string } | null
+}
+
+export default function AdminRequestsPage() {
+  const [requests, setRequests] = useState<RequestWithService[]>([])
+  const [selectedStatus, setSelectedStatus] = useState('all')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchRequests = async () => {
+      setIsLoading(true)
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('project_requests')
+        .select('*, service:services(name)')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Failed to load requests:', error)
+        setError('Failed to load requests')
+        setRequests([])
+      } else {
+        setRequests(data || [])
+      }
+      setIsLoading(false)
+    }
+
+    fetchRequests()
+  }, [])
+
+  const counts = useMemo(() => ({
+    all: requests.length,
+    pending: requests.filter((r) => r.status === 'pending').length,
+    accepted: requests.filter((r) => r.status === 'accepted').length,
+    rejected: requests.filter((r) => r.status === 'rejected').length,
+    completed: requests.filter((r) => r.status === 'completed').length,
+  }), [requests])
+
+  const filteredRequests = useMemo(
+    () => selectedStatus === 'all'
+      ? requests
+      : requests.filter((r) => r.status === selectedStatus),
+    [requests, selectedStatus],
+  )
 
   return (
     <div className="space-y-8">
@@ -29,23 +83,27 @@ export default async function AdminRequestsPage() {
         </p>
       </div>
 
-      {/* Filter Stats */}
-      <div className="flex gap-4">
-        <Badge variant="outline" className="px-4 py-2 border-2 border-yellow-500 text-yellow-500">
-          {pendingCount} Pending
-        </Badge>
-        <Badge variant="outline" className="px-4 py-2 border-2 border-green-500 text-green-500">
-          {acceptedCount} Accepted
-        </Badge>
-        <Badge variant="outline" className="px-4 py-2 border-2 border-red-500 text-red-500">
-          {rejectedCount} Rejected
-        </Badge>
-      </div>
+      <RequestStatusFilters
+        selectedStatus={selectedStatus}
+        counts={counts}
+        onSelect={setSelectedStatus}
+      />
 
-      {/* Requests List */}
-      {requests && requests.length > 0 ? (
+      {isLoading ? (
         <div className="space-y-4">
-          {requests.map((request) => (
+          {[1, 2, 3].map((item) => (
+            <Card key={item} className="bg-card border-4 border-border animate-pulse">
+              <CardContent className="h-28" />
+            </Card>
+          ))}
+        </div>
+      ) : error ? (
+        <Card className="bg-card border-4 border-border">
+          <CardContent className="py-12 text-center text-destructive">{error}</CardContent>
+        </Card>
+      ) : filteredRequests.length > 0 ? (
+        <div className="space-y-4">
+          {filteredRequests.map((request) => (
             <Link key={request.id} href={`/admin/requests/${request.id}`}>
               <Card className="bg-card border-4 border-border hover:border-primary transition-colors">
                 <CardHeader className="pb-2">
@@ -58,11 +116,7 @@ export default async function AdminRequestsPage() {
                         {request.service?.name || request.custom_request || 'Custom Request'}
                       </p>
                     </div>
-                    <span className={`font-[var(--font-pixel)] text-[10px] px-3 py-1 ${
-                      request.status === 'pending' ? 'bg-yellow-500/20 text-yellow-500' :
-                      request.status === 'accepted' ? 'bg-green-500/20 text-green-500' :
-                      'bg-red-500/20 text-red-500'
-                    }`}>
+                    <span className={`font-[var(--font-pixel)] text-[10px] px-3 py-1 ${statusBadgeClass(request.status)}`}>
                       {request.status.toUpperCase()}
                     </span>
                   </div>
@@ -92,17 +146,22 @@ export default async function AdminRequestsPage() {
                       {new Date(request.created_at).toLocaleDateString()}
                     </span>
                   </div>
-                  
+
                   {request.project_details && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                       {request.project_details}
                     </p>
                   )}
-                  
-                  <div className="flex items-center justify-between">
+
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
                     {request.budget_range && (
                       <Badge variant="secondary" className="text-xs">
-                        Budget: {request.budget_range.replace('-', ' - $').replace('under', 'Under $').replace('over', 'Over $')}
+                        Budget: {formatBudgetRange(request.budget_range)}
+                      </Badge>
+                    )}
+                    {request.referral_source && (
+                      <Badge variant="outline" className="text-xs">
+                        {request.referral_source === 'from-someone' ? 'Referred' : 'Found Myself'}
                       </Badge>
                     )}
                     <span className="text-xs text-primary flex items-center gap-1">
@@ -118,7 +177,7 @@ export default async function AdminRequestsPage() {
         <Card className="bg-card border-4 border-border">
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              No requests yet. They will appear here when clients submit them.
+              No requests found for this filter.
             </p>
           </CardContent>
         </Card>
