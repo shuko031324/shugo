@@ -1,0 +1,231 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Pixelated Dark Theme - Shugo Pixel Art */
+  --background: oklch(0.08 0.01 280);
+  --foreground: oklch(0.92 0.01 200);
+  --card: oklch(0.11 0.02 280);
+  --card-foreground: oklch(0.92 0.01 200);
+  --popover: oklch(0.09 0.01 280);
+  --popover-foreground: oklch(0.92 0.01 200);
+  --primary: oklch(0.55 0.23 320);
+  --primary-foreground: oklch(0.08 0.01 280);
+  --secondary: oklch(0.45 0.18 200);
+  --secondary-foreground: oklch(0.08 0.01 280);
+  --muted: oklch(0.20 0.02 280);
+  --muted-foreground: oklch(0.55 0.01 200);
+  --accent: oklch(0.50 0.20 180);
+  --accent-foreground: oklch(0.08 0.01 280);
+  --destructive: oklch(0.50 0.23 25);
+  --destructive-foreground: oklch(0.92 0 0);
+  --border: oklch(0.25 0.05 280);
+  --input: oklch(0.15 0.02 280);
+  --ring: oklch(0.55 0.23 320);
+  --chart-1: oklch(0.55 0.23 320);
+  --chart-2: oklch(0.45 0.18 200);
+  --chart-3: oklch(0.50 0.20 180);
+  --chart-4: oklch(0.50 0.18 60);
+  --chart-5: oklch(0.45 0.18 140);
+  --radius: 0px;
+  --sidebar: oklch(0.09 0.01 280);
+  --sidebar-foreground: oklch(0.92 0.01 200);
+  --sidebar-primary: oklch(0.55 0.23 320);
+  --sidebar-primary-foreground: oklch(0.08 0.01 280);
+  --sidebar-accent: oklch(0.15 0.02 280);
+  --sidebar-accent-foreground: oklch(0.92 0.01 200);
+  --sidebar-border: oklch(0.25 0.05 280);
+  --sidebar-ring: oklch(0.55 0.23 320);
+  
+  /* Custom Pixel Colors - Darker Palette */
+  --pixel-pink: oklch(0.55 0.23 320);
+  --pixel-cyan: oklch(0.50 0.20 180);
+  --pixel-purple: oklch(0.45 0.22 290);
+  --pixel-yellow: oklch(0.60 0.18 90);
+  --pixel-green: oklch(0.50 0.18 140);
+}
+
+.dark {
+  --background: oklch(0.08 0.01 280);
+  --foreground: oklch(0.92 0.01 200);
+  --card: oklch(0.11 0.02 280);
+  --card-foreground: oklch(0.92 0.01 200);
+  --popover: oklch(0.09 0.01 280);
+  --popover-foreground: oklch(0.92 0.01 200);
+  --primary: oklch(0.55 0.23 320);
+  --primary-foreground: oklch(0.08 0.01 280);
+  --secondary: oklch(0.45 0.18 200);
+  --secondary-foreground: oklch(0.08 0.01 280);
+  --muted: oklch(0.20 0.02 280);
+  --muted-foreground: oklch(0.55 0.01 200);
+  --accent: oklch(0.50 0.20 180);
+  --accent-foreground: oklch(0.08 0.01 280);
+  --destructive: oklch(0.50 0.23 25);
+  --destructive-foreground: oklch(0.92 0 0);
+  --border: oklch(0.25 0.05 280);
+  --input: oklch(0.15 0.02 280);
+  --ring: oklch(0.55 0.23 320);
+  --chart-1: oklch(0.55 0.23 320);
+  --chart-2: oklch(0.45 0.18 200);
+  --chart-3: oklch(0.50 0.20 180);
+  --chart-4: oklch(0.50 0.18 60);
+  --chart-5: oklch(0.45 0.18 140);
+  --sidebar: oklch(0.09 0.01 280);
+  --sidebar-foreground: oklch(0.92 0.01 200);
+  --sidebar-primary: oklch(0.55 0.23 320);
+  --sidebar-primary-foreground: oklch(0.08 0.01 280);
+  --sidebar-accent: oklch(0.15 0.02 280);
+  --sidebar-accent-foreground: oklch(0.92 0.01 200);
+  --sidebar-border: oklch(0.25 0.05 280);
+  --sidebar-ring: oklch(0.55 0.23 320);
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback', monospace;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+  --font-pixel: 'Press Start 2P', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-pixel-pink: var(--pixel-pink);
+  --color-pixel-cyan: var(--pixel-cyan);
+  --color-pixel-purple: var(--pixel-purple);
+  --color-pixel-yellow: var(--pixel-yellow);
+  --color-pixel-green: var(--pixel-green);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Pixel Art Styling */
+.pixel-border {
+  box-shadow: 
+    4px 0 0 0 var(--border),
+    -4px 0 0 0 var(--border),
+    0 4px 0 0 var(--border),
+    0 -4px 0 0 var(--border),
+    4px 4px 0 0 var(--border),
+    -4px 4px 0 0 var(--border),
+    4px -4px 0 0 var(--border),
+    -4px -4px 0 0 var(--border);
+}
+
+.pixel-border-primary {
+  box-shadow: 
+    4px 0 0 0 var(--primary),
+    -4px 0 0 0 var(--primary),
+    0 4px 0 0 var(--primary),
+    0 -4px 0 0 var(--primary),
+    4px 4px 0 0 var(--primary),
+    -4px 4px 0 0 var(--primary),
+    4px -4px 0 0 var(--primary),
+    -4px -4px 0 0 var(--primary);
+}
+
+.pixel-glow {
+  box-shadow: 
+    0 0 10px var(--primary),
+    0 0 20px var(--primary),
+    0 0 30px var(--primary);
+}
+
+.pixel-text-shadow {
+  text-shadow: 
+    2px 2px 0 var(--background),
+    -2px -2px 0 var(--background),
+    2px -2px 0 var(--background),
+    -2px 2px 0 var(--background);
+}
+
+/* Scanline effect */
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+}
+
+/* Pixel font class */
+.font-pixel {
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* Grid pattern background */
+.pixel-grid {
+  background-image: 
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Animated pixel cursor */
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.pixel-cursor::after {
+  content: '_';
+  animation: blink 1s infinite;
+}
+
+/* Status indicators */
+.status-pending {
+  color: var(--pixel-yellow);
+}
+
+.status-accepted {
+  color: var(--pixel-green);
+}
+
+.status-rejected {
+  color: var(--destructive);
+}
