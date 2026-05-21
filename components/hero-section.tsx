@@ -42,7 +42,7 @@ export function HeroSection() {
               href="#request"
               className="px-8 py-4 bg-primary text-primary-foreground font-[var(--font-pixel)] text-xs hover:bg-primary/90 transition-all pixel-border-primary pixel-glow"
             >
-              START PROJECT
+              REQUEST PROJECT
             </Link>
             <Link
               href="#portfolio"

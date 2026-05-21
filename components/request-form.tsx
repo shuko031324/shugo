@@ -304,7 +304,7 @@ export function RequestForm({ services }: RequestFormProps) {
               </div>
               
               <div>
-                <Label htmlFor="project_details" className="text-sm">Project Description</Label>
+                <Label htmlFor="project_details" className="text-sm">Project Description & Specifics</Label>
                 <Textarea
                   id="project_details"
                   value={formData.project_details}
