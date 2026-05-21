@@ -44,5 +44,15 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Expose a lightweight non-httpOnly cookie with the admin email so client layout
+  // can read it without a network call. This is safe because the middleware already
+  // enforces auth and the cookie contains only the email address.
+  if (user?.email) {
+    supabaseResponse.cookies.set('admin_email', user.email, { path: '/', maxAge: 60 * 60 })
+  } else {
+    // clear cookie when no user
+    supabaseResponse.cookies.set('admin_email', '', { path: '/', maxAge: 0 })
+  }
+
   return supabaseResponse
 }

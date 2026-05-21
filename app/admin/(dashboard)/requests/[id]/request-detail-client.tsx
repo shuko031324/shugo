@@ -243,7 +243,7 @@ export function RequestDetailClient({ request: initialRequest }: RequestDetailCl
 
               {request.project_details && (
                 <div className="p-3 bg-muted">
-                  <p className="text-xs text-muted-foreground mb-1">Project Description</p>
+                  <p className="text-xs text-muted-foreground mb-1">Project Description & Specifics</p>
                   <p className="text-foreground whitespace-pre-wrap">{request.project_details}</p>
                 </div>
               )}

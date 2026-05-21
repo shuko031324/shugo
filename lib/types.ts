@@ -16,6 +16,7 @@ export interface PortfolioProject {
   client_name: string | null
   image_url: string | null
   image_pathname: string | null
+  image_preview_url?: string | null
   project_url: string | null
   is_featured: boolean
   is_visible: boolean

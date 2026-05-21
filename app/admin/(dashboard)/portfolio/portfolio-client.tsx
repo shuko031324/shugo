@@ -54,6 +54,7 @@ export function PortfolioClient({ initialProjects = [] }: PortfolioClientProps) 
         .from('portfolio_projects')
         .select('*')
         .order('sort_order', { ascending: true })
+        .limit(200)
 
       if (!error) {
         setProjects(data || [])
@@ -296,7 +297,7 @@ export function PortfolioClient({ initialProjects = [] }: PortfolioClientProps) 
                         />
                       ) : (
                         <Image
-                          src={`/api/files?pathname=${encodeURIComponent(formData.image_pathname)}`}
+                          src={formData.image_pathname ? `/api/files?pathname=${encodeURIComponent(formData.image_pathname)}` : ''}
                           alt="Project preview"
                           fill
                           className="object-cover"
@@ -423,7 +424,7 @@ export function PortfolioClient({ initialProjects = [] }: PortfolioClientProps) 
               <div className="relative aspect-video bg-muted">
                 {project.image_pathname ? (
                   <img
-                    src={`/api/files?pathname=${encodeURIComponent(project.image_pathname)}`}
+                    src={project.image_preview_url || `/api/files?pathname=${encodeURIComponent(project.image_pathname)}`}
                     alt={project.title}
                     className="absolute inset-0 h-full w-full object-cover"
                   />

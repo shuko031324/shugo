@@ -47,6 +47,7 @@ export function ServicesClient({ initialServices = [] }: ServicesClientProps) {
         .from('services')
         .select('*')
         .order('sort_order', { ascending: true })
+        .limit(200)
 
       if (!error) {
         setServices(data || [])

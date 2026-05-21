@@ -25,36 +25,55 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchRecent = async () => {
       setIsLoading(true)
       const supabase = createClient()
-
       try {
-        const [pending, total, services, portfolio, recent] = await Promise.all([
-          supabase.from('project_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-          supabase.from('project_requests').select('*', { count: 'exact', head: true }),
-          supabase.from('services').select('*', { count: 'exact', head: true }),
-          supabase.from('portfolio_projects').select('*', { count: 'exact', head: true }),
-          supabase.from('project_requests')
-            .select('*, service:services(name)')
-            .order('created_at', { ascending: false })
-            .limit(5),
-        ])
+        const { data: recent, error } = await supabase
+          .from('project_requests')
+          .select('*, service:services(name)')
+          .order('created_at', { ascending: false })
+          .limit(5)
 
-        setPendingCount(pending.count || 0)
-        setTotalRequests(total.count || 0)
-        setServicesCount(services.count || 0)
-        setPortfolioCount(portfolio.count || 0)
-        setRecentRequests(recent.data || [])
+        if (error) {
+          console.error('Error loading recent requests:', error)
+          setError('Unable to load dashboard data.')
+        } else {
+          setRecentRequests(recent || [])
+        }
       } catch (err) {
-        console.error('Error loading dashboard:', err)
+        console.error('Error loading recent requests:', err)
         setError('Unable to load dashboard data.')
       } finally {
         setIsLoading(false)
       }
     }
 
-    fetchDashboardData()
+    fetchRecent()
+  }, [])
+
+  // Fetch heavier counts in background so the page renders quickly
+  useEffect(() => {
+    const fetchCounts = async () => {
+      const supabase = createClient()
+      try {
+        const [pending, total, services, portfolio] = await Promise.all([
+          supabase.from('project_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+          supabase.from('project_requests').select('id', { count: 'exact', head: true }),
+          supabase.from('services').select('id', { count: 'exact', head: true }),
+          supabase.from('portfolio_projects').select('id', { count: 'exact', head: true }),
+        ])
+
+        setPendingCount(pending.count || 0)
+        setTotalRequests(total.count || 0)
+        setServicesCount(services.count || 0)
+        setPortfolioCount(portfolio.count || 0)
+      } catch (err) {
+        console.error('Error loading dashboard counts:', err)
+      }
+    }
+
+    fetchCounts()
   }, [])
 
   const stats = [

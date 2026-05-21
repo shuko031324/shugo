@@ -133,7 +133,7 @@ export function PortfolioCarousel({ projects }: PortfolioCarouselProps) {
                   >
                     {project.image_pathname ? (
                       <Image
-                        src={`/api/files?pathname=${encodeURIComponent(project.image_pathname)}`}
+                        src={project.image_preview_url || `/api/files?pathname=${encodeURIComponent(project.image_pathname)}`}
                         alt={project.title}
                         fill
                         className="object-cover transition-transform group-hover:scale-105"
@@ -194,7 +194,7 @@ export function PortfolioCarousel({ projects }: PortfolioCarouselProps) {
 
           <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
             <DialogContent className="!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !p-0 !rounded-none !top-0 !left-0 !translate-x-0 !translate-y-0 bg-card border-4 border-border">
-              {previewProject && (
+                  {previewProject && (
                 <div className="relative bg-black w-full h-full">
                   <DialogHeader className="p-4">
                     <DialogTitle className="text-white text-sm">
@@ -204,7 +204,7 @@ export function PortfolioCarousel({ projects }: PortfolioCarouselProps) {
                   <div className="relative h-[calc(100vh-4rem)] w-full">
                     {previewProject.image_pathname ? (
                       <img
-                        src={`/api/files?pathname=${encodeURIComponent(previewProject.image_pathname)}`}
+                        src={previewProject.image_preview_url || `/api/files?pathname=${encodeURIComponent(previewProject.image_pathname)}`}
                         alt={previewProject.title}
                         className="h-full w-full object-contain"
                       />

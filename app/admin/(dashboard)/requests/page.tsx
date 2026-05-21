@@ -41,8 +41,9 @@ export default function AdminRequestsPage() {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('project_requests')
-        .select('*, service:services(name)')
+        .select('id, client_name, status, created_at, custom_request, project_details, budget_range, referral_source, commissioned_by, email, facebook_name, mobile_number, service:services(name)')
         .order('created_at', { ascending: false })
+        .limit(200)
 
       if (error) {
         console.error('Failed to load requests:', error)
