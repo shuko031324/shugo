@@ -41,7 +41,7 @@ export function ServicesSection({ services }: ServicesSectionProps) {
             <span className="text-accent">SHUGO</span> SERVICES
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Premium digital services with pixel-perfect design and creative excellence.
+            Online Deployment in Vercel, Database Setup with Supabase, and Custom Integrations.
           </p>
         </div>
         
